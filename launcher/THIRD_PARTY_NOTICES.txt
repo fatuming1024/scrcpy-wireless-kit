@@ -1,0 +1,38 @@
+Third-party software in this package
+====================================
+
+This all-in-one package bundles the unmodified Windows (win64) release of
+scrcpy 4.1 together with the scrcpy Wireless Kit scripts. The bundled
+programs are distributed under their own licenses:
+
+scrcpy 4.1 (scrcpy.exe, scrcpy-server, scrcpy-noconsole.vbs,
+open_a_terminal_here.bat, icon images)
+  Copyright (C) 2018 Genymobile, Copyright (C) 2018-2026 Romain Vimont
+  Apache License 2.0 - full text in LICENSE.txt
+  https://github.com/Genymobile/scrcpy
+
+Android Debug Bridge (adb.exe, AdbWinApi.dll, AdbWinUsbApi.dll)
+  Android SDK Platform-Tools 37.0.0, The Android Open Source Project
+  Apache License 2.0
+  https://developer.android.com/tools/releases/platform-tools
+  Source: https://android.googlesource.com/platform/packages/modules/adb
+
+FFmpeg (avcodec-62.dll, avformat-62.dll, avutil-60.dll, swresample-6.dll)
+  GNU Lesser General Public License v2.1 or later
+  https://ffmpeg.org  -  Source: https://ffmpeg.org/download.html
+  (build used by scrcpy: https://github.com/Genymobile/scrcpy/blob/master/doc/build.md)
+
+SDL 3 (SDL3.dll)
+  zlib License
+  https://www.libsdl.org  -  Source: https://github.com/libsdl-org/SDL
+
+libusb (libusb-1.0.dll)
+  GNU Lesser General Public License v2.1 or later
+  https://libusb.info  -  Source: https://github.com/libusb/libusb
+
+scrcpy Wireless Kit (scrcpy-wireless.exe, app.ico, start.bat, *.ps1, README.md)
+  MIT License - full text in LICENSE-scrcpy-wireless-kit.txt
+  https://github.com/fatuming1024/scrcpy-wireless-kit
+
+The scrcpy Wireless Kit is an independent project and is not affiliated with
+or endorsed by the scrcpy project or Genymobile.

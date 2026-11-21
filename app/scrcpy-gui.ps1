@@ -1,6 +1,6 @@
 ﻿#Requires -Version 5.1
 # scrcpy device launcher - Toss style GUI
-# Launched by scrcpy-wireless.bat
+# Launched by scrcpy-wireless.exe (one folder up) or app\start.bat
 
 $ErrorActionPreference = 'Continue'
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Xaml
@@ -33,7 +33,24 @@ $Strings = @{
         LaunchN       = '미러링 시작 ({0})'
         Empty1        = '연결된 기기가 없습니다.'
         Empty2        = '기기에서 개발자 옵션 &gt; 무선 디버깅을 켠 뒤'
-        Empty3        = '새로고침을 눌러주세요.'
+        Empty3        = '새로고침을 눌러주세요. 처음 연결하는 기기는 위쪽 [기기 추가]를 누르세요.'
+        AddDevice     = '기기 추가'
+        AddDeviceTip  = '새 기기를 페어링 코드로 연결합니다 (기기마다 처음 한 번)'
+        PairTitle     = '새 기기 연결하기'
+        PairSub       = '기기마다 처음 한 번만 하면 됩니다. PC와 기기가 같은 Wi-Fi에 있어야 합니다.'
+        PairStep1     = '설정 → 휴대전화(태블릿) 정보 → 소프트웨어 정보 → ''빌드번호''를 7번 누릅니다. 개발자 옵션이 켜집니다. (이미 켰으면 건너뛰기)'
+        PairStep2     = '설정 → 개발자 옵션 → ''무선 디버깅''을 켭니다.'
+        PairStep3     = '''무선 디버깅'' 글자를 눌러 들어간 뒤 ''페어링 코드로 기기 페어링''을 누릅니다.'
+        PairStep4     = '기기 화면에 나온 6자리 코드를 아래에 입력하고 [페어링]을 누릅니다. IP와 포트는 자동으로 찾습니다.'
+        PairCodeLabel = '페어링 코드 (6자리)'
+        PairAddrLabel = 'IP 주소:포트 — 자동으로 못 찾을 때만 입력 (예: 192.168.0.20:37215)'
+        PairBtn       = '페어링'
+        Cancel        = '취소'
+        PairBadCode   = '6자리 숫자 코드를 입력하세요.'
+        PairSearching = '기기의 페어링 창을 찾는 중입니다... 코드 창을 닫지 마세요.'
+        PairNoService = '기기의 페어링 창을 찾지 못했습니다. ''페어링 코드로 기기 페어링'' 창이 열려 있는지 확인하세요. 계속 안 되면 그 창에 나온 IP 주소:포트를 아래 칸에 입력하세요.'
+        PairOk        = '페어링 완료 ({0}). 기기 목록을 새로 고칩니다.'
+        PairFail      = '페어링 실패 - 코드가 틀렸거나 만료됐을 수 있습니다. 기기에서 새 코드를 받아 다시 시도하세요. ({0})'
         LaunchFail    = '{0}: 실행 실패 - {1}'
         HwFail        = '{0}: 하드웨어 인코더 실패 - 소프트웨어 인코더로 다시 시도합니다.'
         SwFail        = '{0}: 소프트웨어 인코더 실행도 실패했습니다.'
@@ -58,7 +75,24 @@ $Strings = @{
         LaunchN       = 'Start mirroring ({0})'
         Empty1        = 'No device connected.'
         Empty2        = 'Turn on Developer options &gt; Wireless debugging on the device,'
-        Empty3        = 'then click Refresh.'
+        Empty3        = 'then click Refresh. For a new device, click [Add device] at the top.'
+        AddDevice     = 'Add device'
+        AddDeviceTip  = 'Pair a new device with a pairing code (once per device)'
+        PairTitle     = 'Connect a new device'
+        PairSub       = 'Needed only once per device. The PC and the device must be on the same Wi-Fi.'
+        PairStep1     = 'Settings → About phone (→ Software information) → tap ''Build number'' 7 times to turn on Developer options. (Skip if already on.)'
+        PairStep2     = 'Settings → Developer options → turn on ''Wireless debugging''.'
+        PairStep3     = 'Tap the words ''Wireless debugging'' to open it, then tap ''Pair device with pairing code''.'
+        PairStep4     = 'Type the 6-digit code shown on the device below and click [Pair]. The IP and port are found automatically.'
+        PairCodeLabel = 'Pairing code (6 digits)'
+        PairAddrLabel = 'IP address:port — only if it is not found automatically (e.g. 192.168.0.20:37215)'
+        PairBtn       = 'Pair'
+        Cancel        = 'Cancel'
+        PairBadCode   = 'Enter the 6-digit numeric code.'
+        PairSearching = 'Looking for the pairing screen on the device... keep the code window open.'
+        PairNoService = 'Could not find the pairing screen. Check that ''Pair device with pairing code'' is open on the device. If it still fails, type the IP address:port shown there into the box below.'
+        PairOk        = 'Paired ({0}). Refreshing the device list.'
+        PairFail      = 'Pairing failed - the code may be wrong or expired. Get a new code on the device and try again. ({0})'
         LaunchFail    = '{0}: failed to start - {1}'
         HwFail        = '{0}: hardware encoder failed - retrying with the software encoder.'
         SwFail        = '{0}: the software encoder failed too.'
@@ -252,6 +286,8 @@ $xaml = @'
         <TextBlock Text="scrcpy" FontSize="13" FontWeight="Bold" Foreground="#B0B8C1"
                    VerticalAlignment="Center"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,-4,-8,0">
+          <Button x:Name="AddDeviceBtn" Content="@@AddDevice@@" Style="{StaticResource Ghost}"
+                  Height="34" ToolTip="@@AddDeviceTip@@"/>
           <Button x:Name="SendToBtn" Content="@@SendToBtn@@" Style="{StaticResource Ghost}"
                   Height="34" ToolTip="@@SendToTip@@"/>
           <Button x:Name="CloseBtn" Content="✕" Style="{StaticResource IconBtn}"/>
@@ -292,6 +328,85 @@ $xaml = @'
         <Button x:Name="LaunchBtn" Grid.Column="2" Content="@@Launch@@" Style="{StaticResource Primary}"
                 IsEnabled="False"/>
       </Grid>
+
+      <!-- Pairing panel: covers the device list while a new device is paired. -->
+      <Border x:Name="PairPanel" Grid.Row="1" Grid.RowSpan="4" Background="White" Visibility="Collapsed">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+
+          <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
+            <StackPanel Margin="0,14,0,0">
+              <TextBlock Text="@@PairTitle@@" FontSize="23" FontWeight="Bold" Foreground="#191F28"/>
+              <TextBlock Text="@@PairSub@@" FontSize="13.5" Foreground="#8B95A1" Margin="0,7,0,0" TextWrapping="Wrap"/>
+
+              <Border Background="#F9FAFB" CornerRadius="16" Padding="18,16,18,6" Margin="0,18,0,0">
+                <StackPanel>
+                  <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Border Width="22" Height="22" CornerRadius="11" Background="#E8F3FF" VerticalAlignment="Top" Margin="0,0,12,0">
+                      <TextBlock Text="1" FontSize="12" FontWeight="Bold" Foreground="#3182F6" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Grid.Column="1" Text="@@PairStep1@@" FontSize="13.5" Foreground="#333D4B" TextWrapping="Wrap" LineHeight="21"/>
+                  </Grid>
+                  <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Border Width="22" Height="22" CornerRadius="11" Background="#E8F3FF" VerticalAlignment="Top" Margin="0,0,12,0">
+                      <TextBlock Text="2" FontSize="12" FontWeight="Bold" Foreground="#3182F6" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Grid.Column="1" Text="@@PairStep2@@" FontSize="13.5" Foreground="#333D4B" TextWrapping="Wrap" LineHeight="21"/>
+                  </Grid>
+                  <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Border Width="22" Height="22" CornerRadius="11" Background="#E8F3FF" VerticalAlignment="Top" Margin="0,0,12,0">
+                      <TextBlock Text="3" FontSize="12" FontWeight="Bold" Foreground="#3182F6" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Grid.Column="1" Text="@@PairStep3@@" FontSize="13.5" Foreground="#333D4B" TextWrapping="Wrap" LineHeight="21"/>
+                  </Grid>
+                  <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Border Width="22" Height="22" CornerRadius="11" Background="#E8F3FF" VerticalAlignment="Top" Margin="0,0,12,0">
+                      <TextBlock Text="4" FontSize="12" FontWeight="Bold" Foreground="#3182F6" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Grid.Column="1" Text="@@PairStep4@@" FontSize="13.5" Foreground="#333D4B" TextWrapping="Wrap" LineHeight="21"/>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <TextBlock Text="@@PairCodeLabel@@" FontSize="13" FontWeight="SemiBold" Foreground="#4E5968" Margin="2,18,0,0"/>
+              <Border Background="#F2F4F6" CornerRadius="12" Padding="14,0" Height="52" Margin="0,8,0,0">
+                <TextBox x:Name="PairCode" FontSize="22" FontWeight="Bold" Foreground="#191F28"
+                         BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center"
+                         MaxLength="6"/>
+              </Border>
+
+              <TextBlock Text="@@PairAddrLabel@@" FontSize="12" Foreground="#8B95A1" Margin="2,14,0,0" TextWrapping="Wrap"/>
+              <Border Background="#F2F4F6" CornerRadius="10" Padding="12,0" Height="38" Margin="0,6,0,0">
+                <TextBox x:Name="PairAddr" FontSize="13.5" Foreground="#333D4B"
+                         BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center"/>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+
+          <Border x:Name="PairStatusBox" Grid.Row="1" Background="#F4F6F8" CornerRadius="12"
+                  Padding="14,11" Margin="0,16,0,0" Visibility="Collapsed">
+            <TextBlock x:Name="PairStatus" Text="" FontSize="12.5" Foreground="#4E5968" TextWrapping="Wrap"/>
+          </Border>
+
+          <Grid Grid.Row="2" Margin="0,18,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="130"/>
+              <ColumnDefinition Width="10"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button x:Name="PairCancelBtn" Grid.Column="0" Content="@@Cancel@@" Style="{StaticResource Secondary}"/>
+            <Button x:Name="PairGoBtn" Grid.Column="2" Content="@@PairBtn@@" Style="{StaticResource Primary}"/>
+          </Grid>
+        </Grid>
+      </Border>
 
     </Grid>
   </Border>
@@ -347,6 +462,12 @@ $emptyXaml = Expand-Text $emptyXaml
 
 $win = [Windows.Markup.XamlReader]::Parse($xaml)
 
+# Taskbar icon (the window itself is borderless).
+$icoPath = Join-Path $Root 'app.ico'
+if (Test-Path $icoPath) {
+    try { $win.Icon = [Windows.Media.Imaging.BitmapFrame]::Create((New-Object Uri $icoPath)) } catch {}
+}
+
 $DeviceList = $win.FindName('DeviceList')
 $StatusBox  = $win.FindName('StatusBox')
 $StatusText = $win.FindName('StatusText')
@@ -356,6 +477,14 @@ $RefreshBtn = $win.FindName('RefreshBtn')
 $SelectAllBtn = $win.FindName('SelectAllBtn')
 $CloseBtn   = $win.FindName('CloseBtn')
 $SendToBtn  = $win.FindName('SendToBtn')
+$AddDeviceBtn  = $win.FindName('AddDeviceBtn')
+$PairPanel     = $win.FindName('PairPanel')
+$PairCode      = $win.FindName('PairCode')
+$PairAddr      = $win.FindName('PairAddr')
+$PairStatusBox = $win.FindName('PairStatusBox')
+$PairStatus    = $win.FindName('PairStatus')
+$PairCancelBtn = $win.FindName('PairCancelBtn')
+$PairGoBtn     = $win.FindName('PairGoBtn')
 $TitleBar   = $win.FindName('TitleBar')
 
 # ---------------------------------------------------------------- helpers
@@ -803,6 +932,132 @@ $SendToBtn.Add_Click({
     Start-Process -FilePath 'powershell.exe' -WorkingDirectory $script:KitRoot -ArgumentList @(
         '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$setup`"")
 })
+# ---------------------------------------------------------------- pairing
+# "Add device": the user types the 6-digit code from the device's
+# "Pair device with pairing code" screen. The pairing port is found over
+# mDNS (_adb-tls-pairing), then "adb pair" and "adb connect" run in a
+# background job so the window stays responsive.
+
+$script:PairJob = $null
+
+$script:PairWork = {
+    param($AdbExe, $Code, $Addr, $AllowRestart)
+    $env:ADB_MDNS_OPENSCREEN = '1'
+    function A { & $AdbExe @args 2>&1 | ForEach-Object { "$_" } }
+    $res = [ordered]@{ Ok = $false; Stage = ''; Detail = '' }
+
+    if (-not $Addr) {
+        $start = Get-Date; $restarted = $false
+        while (-not $Addr -and ((Get-Date) - $start).TotalSeconds -lt 15) {
+            foreach ($l in @(A mdns services)) {
+                if ($l -match '_adb-tls-pairing\._tcp\s+(\S+:\d+)') { $Addr = $Matches[1]; break }
+            }
+            if (-not $Addr) {
+                # A stale adb server can miss the announcement; restart once,
+                # but never while scrcpy is running (it would cut mirroring).
+                if (-not $restarted -and $AllowRestart -and ((Get-Date) - $start).TotalSeconds -gt 3) {
+                    A kill-server | Out-Null; A start-server | Out-Null; $restarted = $true
+                }
+                Start-Sleep -Milliseconds 700
+            }
+        }
+        if (-not $Addr) { $res.Stage = 'nosvc'; return [pscustomobject]$res }
+    }
+
+    $out = (@(A pair $Addr $Code) -join ' ').Trim()
+    if ($out -notmatch 'Successfully paired') {
+        $res.Stage = 'fail'; $res.Detail = $out; return [pscustomobject]$res
+    }
+    $res.Ok = $true; $res.Detail = $Addr
+
+    # Connect right away so the device shows up in the list.
+    $guid = if ($out -match 'guid=([^\]\s]+)') { $Matches[1] } else { '' }
+    $start = Get-Date
+    while (((Get-Date) - $start).TotalSeconds -lt 10) {
+        foreach ($l in @(A mdns services)) {
+            if ($l -match '_adb-tls-connect\._tcp\s+(\S+:\d+)' -and (-not $guid -or $l.StartsWith($guid))) {
+                A connect $Matches[1] | Out-Null
+                return [pscustomobject]$res
+            }
+        }
+        Start-Sleep -Milliseconds 700
+    }
+    [pscustomobject]$res
+}
+
+function Set-PairStatus([string]$msg) {
+    if ([string]::IsNullOrWhiteSpace($msg)) { $PairStatusBox.Visibility = 'Collapsed' }
+    else { $PairStatus.Text = $msg; $PairStatusBox.Visibility = 'Visible' }
+}
+
+function Set-PairBusy([bool]$on) {
+    $PairGoBtn.IsEnabled = -not $on
+    $PairCode.IsEnabled  = -not $on
+    $PairAddr.IsEnabled  = -not $on
+}
+
+$script:PairTimer = New-Object System.Windows.Threading.DispatcherTimer
+$script:PairTimer.Interval = [TimeSpan]::FromMilliseconds(300)
+$script:PairTimer.Add_Tick({
+    $job = $script:PairJob
+    if (-not $job -or $job.State -eq 'Running' -or $job.State -eq 'NotStarted') { return }
+    $script:PairTimer.Stop()
+    $r = @(Receive-Job $job -ErrorAction SilentlyContinue) | Select-Object -Last 1
+    Remove-Job $job -Force -ErrorAction SilentlyContinue
+    $script:PairJob = $null
+    Set-PairBusy $false
+
+    if ($r -and $r.Ok) {
+        Set-PairStatus ($Txt.PairOk -f $r.Detail)
+        $PairPanel.Visibility = 'Collapsed'
+        Update-DeviceCards
+    } elseif ($r -and $r.Stage -eq 'nosvc') {
+        Set-PairStatus $Txt.PairNoService
+    } else {
+        $detail = if ($r) { $r.Detail } else { "$($job.State)" }
+        Set-PairStatus ($Txt.PairFail -f $detail)
+    }
+})
+
+$AddDeviceBtn.Add_Click({
+    if ($script:Busy -or $script:PairJob) { return }
+    $PairCode.Text = ''
+    $PairAddr.Text = ''
+    Set-PairStatus $null
+    Set-PairBusy $false
+    $PairPanel.Visibility = 'Visible'
+    [void]$PairCode.Focus()
+})
+
+$PairCancelBtn.Add_Click({
+    if ($script:PairJob) {
+        $script:PairTimer.Stop()
+        Stop-Job $script:PairJob -ErrorAction SilentlyContinue
+        Remove-Job $script:PairJob -Force -ErrorAction SilentlyContinue
+        $script:PairJob = $null
+    }
+    Set-PairBusy $false
+    $PairPanel.Visibility = 'Collapsed'
+})
+
+$PairGoBtn.Add_Click({
+    if ($script:PairJob) { return }
+    $code = "$($PairCode.Text)".Trim()
+    if ($code -notmatch '^\d{6}$') { Set-PairStatus $Txt.PairBadCode; return }
+    $addr = "$($PairAddr.Text)".Trim()
+    $allowRestart = @(Get-Process scrcpy -ErrorAction SilentlyContinue).Count -eq 0
+
+    Set-PairBusy $true
+    Set-PairStatus $Txt.PairSearching
+    $script:PairJob = Start-Job -ScriptBlock $script:PairWork -ArgumentList $AdbExe, $code, $addr, $allowRestart
+    $script:PairTimer.Start()
+})
+
+# Enter in the code box starts pairing.
+$PairCode.Add_KeyDown({
+    if ($_.Key -eq 'Return') { $PairGoBtn.RaiseEvent((New-Object Windows.RoutedEventArgs ([Windows.Controls.Button]::ClickEvent))) }
+})
+
 $TitleBar.Add_MouseLeftButtonDown({ $win.DragMove() })
 $win.Add_Closed({ $timer.Stop() })
 $win.Add_ContentRendered({ Update-DeviceCards })

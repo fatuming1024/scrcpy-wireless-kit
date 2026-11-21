@@ -109,7 +109,8 @@ foreach ($serial in $devices.Keys) {
     $lnk.TargetPath       = $PsExe
     $lnk.Arguments        = "-NoProfile -ExecutionPolicy Bypass -File `"$SendPs1`" -Serial `"$serial`" -Label `"$safe`""
     $lnk.WorkingDirectory = $PSScriptRoot
-    $icon = Join-Path $PSScriptRoot 'scrcpy.exe'
+    $icon = Join-Path $PSScriptRoot 'app.ico'
+    if (-not (Test-Path $icon)) { $icon = Join-Path $PSScriptRoot 'scrcpy.exe' }
     if (Test-Path $icon) { $lnk.IconLocation = "$icon,0" }
     $lnk.Save()
     Write-Host ((L '추가: ' 'Created: ') + $menu) -ForegroundColor Green

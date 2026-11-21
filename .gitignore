@@ -12,3 +12,6 @@ LICENSE.txt
 CLAUDE.md
 claude-session-log.md
 *.log
+
+# Build output
+dist/
