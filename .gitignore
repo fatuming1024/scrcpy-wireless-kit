@@ -1,0 +1,14 @@
+# scrcpy release files - download scrcpy separately, do not commit its binaries
+*.exe
+*.dll
+scrcpy-server
+scrcpy.png
+disconnected.png
+scrcpy-noconsole.vbs
+open_a_terminal_here.bat
+LICENSE.txt
+
+# Personal notes / logs
+CLAUDE.md
+claude-session-log.md
+*.log
