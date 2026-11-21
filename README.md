@@ -4,7 +4,9 @@
 
 Windows helper scripts for [scrcpy](https://github.com/Genymobile/scrcpy): mirror one or more Android devices over **Wireless debugging** (no USB cable), and send files from Explorer to a device with a right-click.
 
-> Not affiliated with the scrcpy project. scrcpy itself is **not** included in this repository — download it separately (see Setup).
+> **Download:** get **`scrcpy-wireless-kit-*-win64.zip`** from [Releases](https://github.com/fatuming1024/scrcpy-wireless-kit/releases/latest). It is ready to use and already includes scrcpy 4.1. · 바로 쓸 수 있는 묶음(scrcpy 포함)은 [Releases](https://github.com/fatuming1024/scrcpy-wireless-kit/releases/latest)에서 받으세요.
+>
+> Not affiliated with the scrcpy project. The source repository contains only the scripts; the release zip bundles the unmodified scrcpy 4.1 win64 release under its own licenses (see `THIRD_PARTY_NOTICES.txt` in the zip).
 
 ---
 
@@ -30,8 +32,8 @@ Windows helper scripts for [scrcpy](https://github.com/Genymobile/scrcpy): mirro
 
 ### Setup
 
-1. Download the scrcpy win64 zip and extract it.
-2. Download this kit (green **Code** button → **Download ZIP**) and copy **all its files into that same folder**, next to `scrcpy.exe` and `adb.exe`. The scripts use the `adb.exe` in their own folder.
+1. Download **`scrcpy-wireless-kit-*-win64.zip`** from [Releases](https://github.com/fatuming1024/scrcpy-wireless-kit/releases/latest) and extract it anywhere.
+   - *Alternative:* extract the official [scrcpy win64 release](https://github.com/Genymobile/scrcpy/releases), then copy this repository's files (green **Code** button → **Download ZIP**) into that same folder, next to `scrcpy.exe` and `adb.exe`.
 3. **Pair each device once:**
    1. On the device: *Settings → Developer options → Wireless debugging → ON*.
    2. Tap **Pair device with pairing code**. It shows an `IP:port` and a 6-digit code.
@@ -104,8 +106,8 @@ The scripts in this repository are under the MIT License (see `LICENSE`). scrcpy
 
 ### 설치
 
-1. scrcpy win64 zip을 받아 압축을 풉니다.
-2. 이 kit를 받아서(초록색 **Code** 버튼 → **Download ZIP**) **파일 전부를 그 폴더에 복사**합니다. `scrcpy.exe`, `adb.exe`와 같은 위치여야 합니다. 스크립트가 같은 폴더의 `adb.exe`를 사용하기 때문입니다.
+1. [Releases](https://github.com/fatuming1024/scrcpy-wireless-kit/releases/latest)에서 **`scrcpy-wireless-kit-*-win64.zip`**을 받아 원하는 곳에 압축을 풉니다. scrcpy 4.1이 포함되어 있어 바로 쓸 수 있습니다.
+   - *다른 방법:* 공식 [scrcpy win64 배포판](https://github.com/Genymobile/scrcpy/releases)의 압축을 푼 뒤, 이 저장소의 파일(초록색 **Code** 버튼 → **Download ZIP**)을 그 폴더에 복사합니다. `scrcpy.exe`, `adb.exe`와 같은 위치여야 합니다.
 3. **기기마다 한 번 페어링합니다:**
    1. 기기에서 *설정 → 개발자 옵션 → 무선 디버깅 → 켜기*.
    2. **페어링 코드로 기기 페어링**을 누르면 `IP:포트`와 6자리 코드가 나옵니다.
