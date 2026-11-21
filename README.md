@@ -4,6 +4,8 @@
 
 Windows helper scripts for [scrcpy](https://github.com/Genymobile/scrcpy): mirror one or more Android devices over **Wireless debugging** (no USB cable), and send files from Explorer to a device with a right-click.
 
+<p align="center"><img src="docs/screenshot.png" alt="Launcher window" width="480"></p>
+
 > **Download:** get **`scrcpy-wireless-kit-*-win64.zip`** from [Releases](https://github.com/fatuming1024/scrcpy-wireless-kit/releases/latest). It is ready to use and already includes scrcpy 4.1. · 바로 쓸 수 있는 묶음(scrcpy 포함)은 [Releases](https://github.com/fatuming1024/scrcpy-wireless-kit/releases/latest)에서 받으세요.
 >
 > Not affiliated with the scrcpy project. The source repository contains only the scripts; the release zip bundles the unmodified scrcpy 4.1 win64 release under its own licenses (see `THIRD_PARTY_NOTICES.txt` in the zip).
