@@ -15,6 +15,71 @@ function Invoke-Adb {
     try { & $AdbExe @Arguments 2>$null } catch { @() }
 }
 
+# ---------------------------------------------------------------- Language
+# Korean on Korean Windows, English everywhere else.
+# Override with the environment variable SCRCPY_LANG=ko or SCRCPY_LANG=en.
+
+$Lang = if ($env:SCRCPY_LANG) { $env:SCRCPY_LANG } else { (Get-UICulture).TwoLetterISOLanguageName }
+$Strings = @{
+    ko = @{
+        SendToBtn     = '보내기 메뉴 설정'
+        SendToTip     = '탐색기 우클릭 → 보내기에 기기별 메뉴를 추가/제거합니다'
+        Title         = '미러링할 기기를 선택하세요'
+        SubDefault    = '무선 디버깅이 켜진 기기를 자동으로 찾습니다'
+        SelectAll     = '전체 선택'
+        DeselectAll   = '전체 해제'
+        Refresh       = '새로고침'
+        Launch        = '미러링 시작'
+        LaunchN       = '미러링 시작 ({0})'
+        Empty1        = '연결된 기기가 없습니다.'
+        Empty2        = '기기에서 개발자 옵션 &gt; 무선 디버깅을 켠 뒤'
+        Empty3        = '새로고침을 눌러주세요.'
+        LaunchFail    = '{0}: 실행 실패 - {1}'
+        HwFail        = '{0}: 하드웨어 인코더 실패 - 소프트웨어 인코더로 다시 시도합니다.'
+        SwFail        = '{0}: 소프트웨어 인코더 실행도 실패했습니다.'
+        Searching     = '기기를 찾고 있습니다...'
+        NotFound      = '기기를 찾지 못했습니다.'
+        WindowSize    = '창 {0}x{1}'
+        FoundN        = '기기 {0}대를 찾았습니다. 창 크기는 기기마다 따로 정할 수 있습니다.'
+        Started       = '실행했습니다 - {0}'
+        Starting      = '{0} 실행 중...'
+        SelectOne     = '미러링할 기기를 하나 이상 선택해주세요.'
+        Preparing     = '실행을 준비하고 있습니다...'
+    }
+    en = @{
+        SendToBtn     = 'Send-to menu'
+        SendToTip     = 'Add or remove per-device entries in the Explorer right-click Send to menu'
+        Title         = 'Choose devices to mirror'
+        SubDefault    = 'Devices with Wireless debugging ON are found automatically'
+        SelectAll     = 'Select all'
+        DeselectAll   = 'Deselect all'
+        Refresh       = 'Refresh'
+        Launch        = 'Start mirroring'
+        LaunchN       = 'Start mirroring ({0})'
+        Empty1        = 'No device connected.'
+        Empty2        = 'Turn on Developer options &gt; Wireless debugging on the device,'
+        Empty3        = 'then click Refresh.'
+        LaunchFail    = '{0}: failed to start - {1}'
+        HwFail        = '{0}: hardware encoder failed - retrying with the software encoder.'
+        SwFail        = '{0}: the software encoder failed too.'
+        Searching     = 'Searching for devices...'
+        NotFound      = 'No device found.'
+        WindowSize    = 'Window {0}x{1}'
+        FoundN        = 'Found {0} device(s). Window size can be set per device.'
+        Started       = 'Started - {0}'
+        Starting      = 'Starting {0}...'
+        SelectOne     = 'Select at least one device to mirror.'
+        Preparing     = 'Getting ready...'
+    }
+}
+$Txt = if ($Lang -eq 'ko') { $Strings.ko } else { $Strings.en }
+
+# Replace @@Key@@ tokens in XAML with the chosen language's text.
+function Expand-Text([string]$s) {
+    foreach ($k in $Txt.Keys) { $s = $s.Replace("@@$k@@", $Txt[$k]) }
+    $s
+}
+
 # ---------------------------------------------------------------- XAML
 
 $xaml = @'
@@ -187,8 +252,8 @@ $xaml = @'
         <TextBlock Text="scrcpy" FontSize="13" FontWeight="Bold" Foreground="#B0B8C1"
                    VerticalAlignment="Center"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,-4,-8,0">
-          <Button x:Name="SendToBtn" Content="보내기 메뉴 설정" Style="{StaticResource Ghost}"
-                  Height="34" ToolTip="탐색기 우클릭 → 보내기에 기기별 메뉴를 추가/제거합니다"/>
+          <Button x:Name="SendToBtn" Content="@@SendToBtn@@" Style="{StaticResource Ghost}"
+                  Height="34" ToolTip="@@SendToTip@@"/>
           <Button x:Name="CloseBtn" Content="✕" Style="{StaticResource IconBtn}"/>
         </StackPanel>
       </Grid>
@@ -199,11 +264,11 @@ $xaml = @'
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <StackPanel Grid.Column="0">
-          <TextBlock Text="미러링할 기기를 선택하세요" FontSize="23" FontWeight="Bold" Foreground="#191F28"/>
-          <TextBlock x:Name="SubText" Text="무선 디버깅이 켜진 기기를 자동으로 찾습니다"
+          <TextBlock Text="@@Title@@" FontSize="23" FontWeight="Bold" Foreground="#191F28"/>
+          <TextBlock x:Name="SubText" Text="@@SubDefault@@"
                      FontSize="13.5" Foreground="#8B95A1" Margin="0,7,0,0"/>
         </StackPanel>
-        <Button x:Name="SelectAllBtn" Grid.Column="1" Content="전체 선택"
+        <Button x:Name="SelectAllBtn" Grid.Column="1" Content="@@SelectAll@@"
                 Style="{StaticResource Ghost}" VerticalAlignment="Bottom"
                 Margin="10,0,-8,0" Visibility="Collapsed"/>
       </Grid>
@@ -223,8 +288,8 @@ $xaml = @'
           <ColumnDefinition Width="10"/>
           <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <Button x:Name="RefreshBtn" Grid.Column="0" Content="새로고침" Style="{StaticResource Secondary}"/>
-        <Button x:Name="LaunchBtn" Grid.Column="2" Content="미러링 시작" Style="{StaticResource Primary}"
+        <Button x:Name="RefreshBtn" Grid.Column="0" Content="@@Refresh@@" Style="{StaticResource Secondary}"/>
+        <Button x:Name="LaunchBtn" Grid.Column="2" Content="@@Launch@@" Style="{StaticResource Primary}"
                 IsEnabled="False"/>
       </Grid>
 
@@ -274,8 +339,11 @@ $cardXaml = @'
 $emptyXaml = @'
 <TextBlock xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
            FontSize="13.5" Foreground="#8B95A1" TextAlignment="Center"
-           LineHeight="25" Margin="0,54,0,54">연결된 기기가 없습니다.<LineBreak/><LineBreak/>기기에서 개발자 옵션 &gt; 무선 디버깅을 켠 뒤<LineBreak/>새로고침을 눌러주세요.</TextBlock>
+           LineHeight="25" Margin="0,54,0,54">@@Empty1@@<LineBreak/><LineBreak/>@@Empty2@@<LineBreak/>@@Empty3@@</TextBlock>
 '@
+
+$xaml      = Expand-Text $xaml
+$emptyXaml = Expand-Text $emptyXaml
 
 $win = [Windows.Markup.XamlReader]::Parse($xaml)
 
@@ -492,7 +560,7 @@ function Start-Mirror {
         $proc = Start-Process -FilePath $ScrExe -ArgumentList $hwArgs `
                               -WorkingDirectory $Root -PassThru -WindowStyle Hidden
     } catch {
-        return "$($Device.Model): 실행 실패 - $($_.Exception.Message)"
+        return ($Txt.LaunchFail -f $Device.Model, $_.Exception.Message)
     }
 
     [void]$script:Tracked.Add([pscustomobject]@{
@@ -523,12 +591,12 @@ $timer.Add_Tick({
 
         if ($t.Proc.ExitCode -ne 0 -and -not $t.Retried -and $lifetime -lt $FallbackWindowSeconds) {
             $t.Retried = $true
-            Set-Status "$($t.Name): 하드웨어 인코더 실패 - 소프트웨어 인코더로 다시 시도합니다."
+            Set-Status ($Txt.HwFail -f $t.Name)
             try {
                 $t.Proc = Start-Process -FilePath $ScrExe -ArgumentList $t.SwArgs `
                                         -WorkingDirectory $Root -PassThru -WindowStyle Hidden
             } catch {
-                Set-Status "$($t.Name): 소프트웨어 인코더 실행도 실패했습니다."
+                Set-Status ($Txt.SwFail -f $t.Name)
                 $finished += $t
             }
         } else {
@@ -563,8 +631,8 @@ function Update-SelectionState {
     }
 
     $SelectAllBtn.Visibility = if ($total -gt 0) { 'Visible' } else { 'Collapsed' }
-    $SelectAllBtn.Content    = if ($total -gt 0 -and $checked -eq $total) { '전체 해제' } else { '전체 선택' }
-    $LaunchBtn.Content       = if ($checked -gt 0) { "미러링 시작 ($checked)" } else { '미러링 시작' }
+    $SelectAllBtn.Content    = if ($total -gt 0 -and $checked -eq $total) { $Txt.DeselectAll } else { $Txt.SelectAll }
+    $LaunchBtn.Content       = if ($checked -gt 0) { $Txt.LaunchN -f $checked } else { $Txt.Launch }
 
     if (-not $script:Busy) { $LaunchBtn.IsEnabled = ($checked -gt 0) }
 }
@@ -584,14 +652,14 @@ function Update-DeviceCards {
     $DeviceList.Children.Clear()
     $script:Cards.Clear()
 
-    Set-Status '기기를 찾고 있습니다...'
+    Set-Status $Txt.Searching
     Sync-Ui
     $devices = @(Get-DeviceList)
 
     if ($devices.Count -eq 0) {
         [void]$DeviceList.Children.Add([Windows.Markup.XamlReader]::Parse($emptyXaml))
-        $SubText.Text = '무선 디버깅이 켜진 기기를 자동으로 찾습니다'
-        Set-Status '기기를 찾지 못했습니다.'
+        $SubText.Text = $Txt.SubDefault
+        Set-Status $Txt.NotFound
         Set-Busy $false
         return
     }
@@ -619,7 +687,7 @@ function Update-DeviceCards {
                 $pct = [int]("$($sel.Tag)".Split(':')[1])
                 $sz  = Get-WindowSize -Width $entry.Device.CurWidth `
                                       -Height $entry.Device.CurHeight -Percent $pct
-                $entry.PxText.Text = '창 {0}x{1}' -f $sz.Width, $sz.Height
+                $entry.PxText.Text = $Txt.WindowSize -f $sz.Width, $sz.Height
             }
         }.GetNewClosure()
 
@@ -648,7 +716,7 @@ function Update-DeviceCards {
         $index++
     }
 
-    $SubText.Text = '기기 {0}대를 찾았습니다. 창 크기는 기기마다 따로 정할 수 있습니다.' -f $devices.Count
+    $SubText.Text = $Txt.FoundN -f $devices.Count
     Set-Status $null
     Set-Busy $false
 }
@@ -677,7 +745,7 @@ $script:LaunchTimer.Add_Tick({
         if ($script:Errors.Count -gt 0) {
             Set-Status ($script:Errors -join '   ')
         } else {
-            Set-Status ('실행했습니다 - {0}' -f ($script:Started -join ', '))
+            Set-Status ($Txt.Started -f ($script:Started -join ', '))
         }
         Set-Busy $false
         return
@@ -686,7 +754,7 @@ $script:LaunchTimer.Add_Tick({
     $item = $script:Queue[0]
     $script:Queue.RemoveAt(0)
 
-    Set-Status ('{0} 실행 중...' -f $item.Device.Model)
+    Set-Status ($Txt.Starting -f $item.Device.Model)
     $err = Start-Mirror -Device $item.Device -Percent $item.Percent -Index $item.Index
 
     if ($err) { [void]$script:Errors.Add($err) }
@@ -698,7 +766,7 @@ $LaunchBtn.Add_Click({
 
     $selected = @(Get-CheckedCards)
     if ($selected.Count -eq 0) {
-        Set-Status '미러링할 기기를 하나 이상 선택해주세요.'
+        Set-Status $Txt.SelectOne
         return
     }
 
@@ -720,7 +788,7 @@ $LaunchBtn.Add_Click({
     }
 
     Set-Busy $true
-    Set-Status '실행을 준비하고 있습니다...'
+    Set-Status $Txt.Preparing
     $script:LaunchTimer.Start()
 })
 

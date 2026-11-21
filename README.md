@@ -14,9 +14,10 @@ Windows helper scripts for [scrcpy](https://github.com/Genymobile/scrcpy): mirro
 
 | | What it does |
 |---|---|
-| **One launcher** (`scrcpy-wireless.bat`) | The only file you run. Finds wireless devices automatically, lets you tick the ones to mirror and pick a window size per device (30 / 50 / 75 / 100 %), then opens them all at once. UI text is Korean. |
+| **One launcher** (`scrcpy-wireless.bat`) | The only file you run. Finds wireless devices automatically, lets you tick the ones to mirror and pick a window size per device (30 / 50 / 75 / 100 %), then opens them all at once. |
+| **English / Korean UI** | Follows the Windows display language (Korean Windows → Korean, otherwise English). Force one with the environment variable `SCRCPY_LANG=en` or `SCRCPY_LANG=ko`. |
 | **Auto-connect** | Uses mDNS to find each device's Wireless-debugging port, which changes every time it is turned on. You never type an IP or port. If the adb server has gone stale, it restarts it and searches again. |
-| **Send to device** (launcher button **"보내기 메뉴 설정"**) | Adds **Right-click → Send to → "Send to &lt;device&gt;"** to Explorer. Files and folders go to the device's `Download` folder over Wi-Fi, with no mirroring window needed. |
+| **Send to device** (launcher button **"Send-to menu"**) | Adds **Right-click → Send to → "Send to &lt;device&gt;"** to Explorer. Files and folders go to the device's `Download` folder over Wi-Fi, with no mirroring window needed. |
 | **Korean typing** | Mirror windows use `--keyboard=uhid` (the device sees a physical keyboard), so the device's own keyboard handles Korean and other languages. |
 | **Encoder fallback** | If the device's hardware video encoder fails at start-up, the launcher retries with the software encoder. |
 | **Rotation-aware sizing** | Window size is computed from the device's *current* orientation, and stream quality stays high when you resize the window. |
@@ -30,7 +31,7 @@ Windows helper scripts for [scrcpy](https://github.com/Genymobile/scrcpy): mirro
 ### Setup
 
 1. Download the scrcpy win64 zip and extract it.
-2. Copy **all files of this repository into that same folder**, next to `scrcpy.exe` and `adb.exe`. The scripts use the `adb.exe` in their own folder.
+2. Download this kit (green **Code** button → **Download ZIP**) and copy **all its files into that same folder**, next to `scrcpy.exe` and `adb.exe`. The scripts use the `adb.exe` in their own folder.
 3. **Pair each device once:**
    1. On the device: *Settings → Developer options → Wireless debugging → ON*.
    2. Tap **Pair device with pairing code**. It shows an `IP:port` and a 6-digit code.
@@ -39,7 +40,7 @@ Windows helper scripts for [scrcpy](https://github.com/Genymobile/scrcpy): mirro
       .\adb.exe pair <IP:port> <code>
       ```
 4. Double-click **`scrcpy-wireless.bat`**.
-5. *(Optional)* With your devices' Wireless debugging ON, click **"보내기 메뉴 설정"** (top of the launcher) → `1`. It creates one "Send to" entry per device and asks you for a name for each one.
+5. *(Optional)* With your devices' Wireless debugging ON, click **"Send-to menu"** (top of the launcher) → `1`. It creates one "Send to" entry per device and asks you for a name for each one.
 
 ### Does it reconnect automatically?
 
@@ -56,7 +57,7 @@ Windows helper scripts for [scrcpy](https://github.com/Genymobile/scrcpy): mirro
 - Right-click a file or folder → **Send to → "Send to &lt;name&gt;"**. On Windows 11, choose *Show more options* first.
 - Files land in `/sdcard/Download/` on the device. A folder with a name that already exists gets ` (2)` added.
 - Korean and other non-ASCII file and folder names are supported. The script works around two `adb push` bugs with such names.
-- After pairing a new device, click **"보내기 메뉴 설정"** → `1` again. To remove the entries, choose `2`.
+- After pairing a new device, click **"Send-to menu"** → `1` again. To remove the entries, choose `2`.
 - Alternative: drag files onto an open scrcpy window. This is built into scrcpy, and `.apk` files are installed instead of copied.
 
 ### Tips / known limitations
@@ -88,6 +89,7 @@ The scripts in this repository are under the MIT License (see `LICENSE`). scrcpy
 | | 설명 |
 |---|---|
 | **실행 파일 하나** (`scrcpy-wireless.bat`) | 이 파일 하나만 실행하면 됩니다. 무선 기기를 자동으로 찾아 목록으로 보여줍니다. 미러링할 기기를 체크하고 기기별 창 크기(30 / 50 / 75 / 100%)를 고른 뒤 한 번에 실행합니다. |
+| **한국어 / 영어 화면** | Windows 표시 언어를 따라갑니다(한국어 Windows → 한국어, 그 외 → 영어). 환경 변수 `SCRCPY_LANG=ko` 또는 `SCRCPY_LANG=en`으로 고정할 수 있습니다. |
 | **자동 연결** | 무선 디버깅 포트는 켤 때마다 바뀌는데, mDNS로 이 포트를 자동으로 찾습니다. IP나 포트를 입력할 필요가 없습니다. adb 서버가 오래 켜져 있어 기기를 못 찾으면 서버를 재시작해서 다시 찾습니다. |
 | **기기로 보내기** (런처 상단 **"보내기 메뉴 설정"** 버튼) | 탐색기 **우클릭 → 보내기 → "Send to &lt;기기&gt;"** 메뉴를 추가합니다. 파일과 폴더가 Wi-Fi로 기기의 `Download` 폴더에 복사되고, 미러링 창을 띄우지 않아도 됩니다. |
 | **한글 입력** | 미러링 창을 `--keyboard=uhid`로 실행합니다. 기기는 실제 키보드가 연결된 것으로 인식하고, 기기 쪽 키보드 앱이 한글을 입력합니다. |
@@ -103,7 +105,7 @@ The scripts in this repository are under the MIT License (see `LICENSE`). scrcpy
 ### 설치
 
 1. scrcpy win64 zip을 받아 압축을 풉니다.
-2. 이 저장소의 **파일 전부를 그 폴더에 복사**합니다. `scrcpy.exe`, `adb.exe`와 같은 위치여야 합니다. 스크립트가 같은 폴더의 `adb.exe`를 사용하기 때문입니다.
+2. 이 kit를 받아서(초록색 **Code** 버튼 → **Download ZIP**) **파일 전부를 그 폴더에 복사**합니다. `scrcpy.exe`, `adb.exe`와 같은 위치여야 합니다. 스크립트가 같은 폴더의 `adb.exe`를 사용하기 때문입니다.
 3. **기기마다 한 번 페어링합니다:**
    1. 기기에서 *설정 → 개발자 옵션 → 무선 디버깅 → 켜기*.
    2. **페어링 코드로 기기 페어링**을 누르면 `IP:포트`와 6자리 코드가 나옵니다.

@@ -2,7 +2,7 @@
 # to a device's Download folder over wireless debugging.
 #   -Serial  hardware serial (ro.serialno) of the target device  (required)
 #   -Label   name shown in messages (defaults to the serial)
-# The "Send to" shortcuts that call this are created by send-to-setup.ps1 (launcher button "보내기 메뉴 설정").
+# The "Send to" shortcuts that call this are created by send-to-setup.ps1 (launcher button).
 # Saved as UTF-8 with BOM (Korean messages) - reapply BOM after editing.
 
 param(
@@ -15,7 +15,13 @@ if (-not $Label) { $Label = $Serial }
 $Target = '/sdcard/Download/'
 $AdbExe = Join-Path $PSScriptRoot 'adb.exe'
 $env:ADB_MDNS_OPENSCREEN = '1'
-$Host.UI.RawUI.WindowTitle = "$Label(으)로 보내기"
+
+# Messages: Korean on Korean Windows, English otherwise (override: SCRCPY_LANG=ko|en).
+$LangCode = if ($env:SCRCPY_LANG) { $env:SCRCPY_LANG } else { (Get-UICulture).TwoLetterISOLanguageName }
+$IsKo = $LangCode -eq 'ko'
+function L([string]$ko, [string]$en) { if ($IsKo) { $ko } else { $en } }
+
+$Host.UI.RawUI.WindowTitle = (L "$Label(으)로 보내기" "Send to $Label")
 
 function Invoke-Adb { param([string[]]$A) & $AdbExe @A 2>$null }
 
@@ -24,8 +30,8 @@ function Quote-Sh([string]$s) { $s -replace "'", "'\''" }
 
 function Stop-WithError($msg) {
     Write-Host ""
-    Write-Host "[실패] $msg" -ForegroundColor Red
-    Read-Host "Enter를 누르면 닫힙니다" | Out-Null
+    Write-Host ((L '[실패] ' '[Failed] ') + $msg) -ForegroundColor Red
+    Read-Host (L 'Enter를 누르면 닫힙니다' 'Press Enter to close') | Out-Null
     exit 1
 }
 
@@ -49,9 +55,12 @@ function Get-MdnsAddr {
     return $null
 }
 
-if (-not $Paths -or $Paths.Count -eq 0) { Stop-WithError "보낼 파일이 없습니다. 파일을 우클릭 → 보내기 → $Label(으)로 보내기로 사용하세요." }
+if (-not $Paths -or $Paths.Count -eq 0) {
+    Stop-WithError (L '보낼 파일이 없습니다. 탐색기에서 파일 우클릭 → 보내기 메뉴로 사용하세요.' `
+                      'No files given. Use it from Explorer: right-click a file > Send to.')
+}
 
-Write-Host "$Label 찾는 중..." -ForegroundColor Cyan
+Write-Host (L "$Label 찾는 중..." "Searching for $Label...") -ForegroundColor Cyan
 Invoke-Adb @('start-server') | Out-Null
 
 $addr = Find-Online
@@ -68,17 +77,19 @@ if (-not $addr) {
         }
     }
     if (-not $mdns) {
-        Stop-WithError "$Label 을(를) 찾지 못했습니다. $Label 화면을 켜고 개발자 옵션 → 무선 디버깅을 켜 주세요."
+        Stop-WithError (L "$Label 을(를) 찾지 못했습니다. 화면을 켜고 개발자 옵션 → 무선 디버깅을 켜 주세요." `
+                          "$Label not found. Wake the device and turn on Developer options > Wireless debugging.")
     }
     Invoke-Adb @('connect', $mdns) | Out-Null
     Start-Sleep -Milliseconds 800
     $addr = Find-Online
     if (-not $addr) {
-        Stop-WithError "$Label($mdns)에 연결하지 못했습니다. 페어링이 풀렸을 수 있습니다 - 무선 디버깅 → 페어링 코드로 기기 페어링 후 다시 시도하세요."
+        Stop-WithError (L "$Label($mdns)에 연결하지 못했습니다. 페어링이 풀렸을 수 있습니다 - 무선 디버깅 → 페어링 코드로 기기 페어링 후 다시 시도하세요." `
+                          "Could not connect to $Label ($mdns). The pairing may have been lost - pair again (Wireless debugging > Pair device with pairing code).")
     }
 }
 
-Write-Host "연결됨: $addr" -ForegroundColor Green
+Write-Host ((L '연결됨: ' 'Connected: ') + $addr) -ForegroundColor Green
 Write-Host ""
 
 $ok = 0; $fail = @()
@@ -111,7 +122,7 @@ foreach ($p in $Paths) {
 
 Write-Host ""
 if ($fail.Count -gt 0) {
-    Stop-WithError ("{0}개 성공, {1}개 실패: {2}" -f $ok, $fail.Count, ($fail -join ', '))
+    Stop-WithError ((L '{0}개 성공, {1}개 실패: {2}' '{0} sent, {1} failed: {2}') -f $ok, $fail.Count, ($fail -join ', '))
 }
-Write-Host ("완료 - {0}개를 {1} Download 폴더로 보냈습니다." -f $ok, $Label) -ForegroundColor Green
+Write-Host ((L '완료 - {0}개를 {1} Download 폴더로 보냈습니다.' 'Done - sent {0} item(s) to the Download folder on {1}.') -f $ok, $Label) -ForegroundColor Green
 Start-Sleep -Seconds 3
