@@ -4,11 +4,11 @@
 #     scrcpy-wireless.exe        <- the only file at the top (has the icon)
 #     app\                       <- scrcpy 4.x win64 files + kit scripts + docs
 #
-#   powershell -ExecutionPolicy Bypass -File launcher\build.ps1 -ScrcpyDir <extracted scrcpy win64 folder> [-Version 1.1.0] [-OutDir dist]
+#   powershell -ExecutionPolicy Bypass -File launcher\build.ps1 -ScrcpyDir <extracted scrcpy win64 folder> [-Version 1.1.1] [-OutDir dist]
 
 param(
     [Parameter(Mandatory = $true)][string]$ScrcpyDir,
-    [string]$Version = '1.1.0',
+    [string]$Version = '1.1.1',
     [string]$OutDir  = ''
 )
 $ErrorActionPreference = 'Stop'

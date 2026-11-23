@@ -13,8 +13,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("scrcpy Wireless Kit")]
 [assembly: AssemblyProduct("scrcpy Wireless Kit")]
 [assembly: AssemblyDescription("Launcher for scrcpy over Android Wireless debugging")]
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.1.1.0")]
+[assembly: AssemblyFileVersion("1.1.1.0")]
 
 static class Program
 {
