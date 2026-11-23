@@ -58,6 +58,7 @@ A one-click Windows launcher for [scrcpy](https://github.com/Genymobile/scrcpy):
 - **The catch:** Android **switches Wireless debugging OFF** whenever Wi-Fi drops or the device reboots. This is an Android security behaviour and cannot be disabled. When that happens, turn it back on before you connect.
   - Tip: *Developer options → Quick settings developer tiles → Wireless debugging* adds a one-tap toggle to the notification shade.
 - Connections are made **when you run the launcher or send a file**. Nothing runs in the background.
+- Some phones sometimes stop announcing their Wireless-debugging port, so the launcher cannot find it. Turning **Wireless debugging** off and on again on the device fixes this. Right after pairing, the launcher instead asks for the *IP address & port* shown at the top of the device's Wireless-debugging screen.
 - Rarely, a device forgets the pairing. The symptom is that the device is found but the connection fails. Pair it again with **Add device**.
 
 ### Sending files
@@ -142,6 +143,7 @@ The kit is under the MIT License (see `LICENSE`). scrcpy is © Genymobile / Roma
 - **조건:** 안드로이드는 **Wi-Fi가 끊기거나 재부팅하면 무선 디버깅을 자동으로 끕니다.** 보안 때문에 들어간 동작이라 끌 수 없습니다. 이럴 때는 연결 전에 무선 디버깅을 다시 켜야 합니다.
   - 팁: *개발자 옵션 → 빠른 설정 개발자 타일 → 무선 디버깅*을 켜 두면 상단 바를 내려서 한 번에 켤 수 있습니다.
 - 연결은 **런처를 실행하거나 파일을 보낼 때** 이루어집니다. 백그라운드에서 상주하며 연결하지는 않습니다.
+- 일부 폰은 가끔 무선 디버깅 포트를 네트워크에 알리지 않아 런처가 찾지 못합니다. 기기에서 **무선 디버깅**을 껐다 켜면 해결됩니다. 페어링 직후에 이런 경우가 생기면, 런처가 기기의 무선 디버깅 화면 맨 위에 있는 *IP 주소 및 포트*를 입력하도록 안내합니다.
 - 드물게 기기 쪽 페어링 정보가 지워질 수 있습니다. 기기는 찾았는데 연결이 실패하면 이 경우이니, **기기 추가**로 다시 페어링해 주세요.
 
 ### 파일 보내기
