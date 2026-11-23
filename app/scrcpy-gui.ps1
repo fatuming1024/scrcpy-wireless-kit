@@ -50,7 +50,12 @@ $Strings = @{
         PairSearching = '기기의 페어링 창을 찾는 중입니다... 코드 창을 닫지 마세요.'
         PairNoService = '기기의 페어링 창을 찾지 못했습니다. ''페어링 코드로 기기 페어링'' 창이 열려 있는지 확인하세요. 계속 안 되면 그 창에 나온 IP 주소:포트를 아래 칸에 입력하세요.'
         PairOk        = '페어링 완료 ({0}). 기기 목록을 새로 고칩니다.'
-        PairNoConnect = '페어링은 완료됐지만 연결 포트를 찾지 못했습니다. 기기의 무선 디버깅 화면을 연 채로 둔 뒤 [취소] → [새로고침]을 눌러 보세요. (기록: %TEMP%\scrcpy-wireless-pair.log)'
+        PairNoConnect = '페어링은 완료됐지만 연결 포트를 자동으로 찾지 못했습니다. 기기의 무선 디버깅 화면 맨 위에 있는 IP 주소 및 포트를 아래 칸에 입력하고 [연결]을 누르세요.'
+        ConnAddrLabel = '기기의 무선 디버깅 화면 맨 위 IP 주소 및 포트 (예: 192.168.0.20:41234)'
+        ConnBtn       = '연결'
+        ConnBadAddr   = 'IP 주소:포트 형식으로 입력하세요 (예: 192.168.0.20:41234).'
+        ConnConnecting = '연결하는 중...'
+        ConnFail      = '연결하지 못했습니다 ({0}). 무선 디버깅 화면의 IP 주소 및 포트를 다시 확인하세요.'
         PairFail      = '페어링 실패 - 코드가 틀렸거나 만료됐을 수 있습니다. 기기에서 새 코드를 받아 다시 시도하세요. ({0})'
         LaunchFail    = '{0}: 실행 실패 - {1}'
         HwFail        = '{0}: 하드웨어 인코더 실패 - 소프트웨어 인코더로 다시 시도합니다.'
@@ -93,7 +98,12 @@ $Strings = @{
         PairSearching = 'Looking for the pairing screen on the device... keep the code window open.'
         PairNoService = 'Could not find the pairing screen. Check that ''Pair device with pairing code'' is open on the device. If it still fails, type the IP address:port shown there into the box below.'
         PairOk        = 'Paired ({0}). Refreshing the device list.'
-        PairNoConnect = 'Paired, but the connection port was not found. Keep the Wireless debugging screen open on the device, then press Cancel and Refresh. (Log: %TEMP%\scrcpy-wireless-pair.log)'
+        PairNoConnect = 'Paired, but the connection port was not found automatically. Type the IP address & port shown at the top of the device''s Wireless debugging screen below and press Connect.'
+        ConnAddrLabel = 'IP address & port at the top of the device''s Wireless debugging screen (e.g. 192.168.0.20:41234)'
+        ConnBtn       = 'Connect'
+        ConnBadAddr   = 'Enter it as IP address:port (e.g. 192.168.0.20:41234).'
+        ConnConnecting = 'Connecting...'
+        ConnFail      = 'Could not connect ({0}). Check the IP address & port on the Wireless debugging screen.'
         PairFail      = 'Pairing failed - the code may be wrong or expired. Get a new code on the device and try again. ({0})'
         LaunchFail    = '{0}: failed to start - {1}'
         HwFail        = '{0}: hardware encoder failed - retrying with the software encoder.'
@@ -385,7 +395,7 @@ $xaml = @'
                          MaxLength="6"/>
               </Border>
 
-              <TextBlock Text="@@PairAddrLabel@@" FontSize="12" Foreground="#8B95A1" Margin="2,14,0,0" TextWrapping="Wrap"/>
+              <TextBlock x:Name="PairAddrLbl" Text="@@PairAddrLabel@@" FontSize="12" Foreground="#8B95A1" Margin="2,14,0,0" TextWrapping="Wrap"/>
               <Border Background="#F2F4F6" CornerRadius="10" Padding="12,0" Height="38" Margin="0,6,0,0">
                 <TextBox x:Name="PairAddr" FontSize="13.5" Foreground="#333D4B"
                          BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center"/>
@@ -483,6 +493,7 @@ $AddDeviceBtn  = $win.FindName('AddDeviceBtn')
 $PairPanel     = $win.FindName('PairPanel')
 $PairCode      = $win.FindName('PairCode')
 $PairAddr      = $win.FindName('PairAddr')
+$PairAddrLbl   = $win.FindName('PairAddrLbl')
 $PairStatusBox = $win.FindName('PairStatusBox')
 $PairStatus    = $win.FindName('PairStatus')
 $PairCancelBtn = $win.FindName('PairCancelBtn')
@@ -943,10 +954,26 @@ $SendToBtn.Add_Click({
 $script:PairJob = $null
 
 $script:PairWork = {
-    param($AdbExe, $Code, $Addr, $AllowRestart)
+    param($AdbExe, $Code, $Addr, $AllowRestart, $ConnectTo)
     $env:ADB_MDNS_OPENSCREEN = '1'
     function A { & $AdbExe @args 2>&1 | ForEach-Object { "$_" } }
     $res = [ordered]@{ Ok = $false; Stage = ''; Detail = '' }
+
+    # Connect-only mode: the user typed the "IP address & port" shown at the
+    # top of the device's Wireless debugging screen (already paired).
+    function Wait-Online([string]$target) {
+        for ($i = 0; $i -lt 6; $i++) {
+            if (@(A devices) -match ('^' + [regex]::Escape($target) + '\s+device$')) { return $true }
+            Start-Sleep -Milliseconds 500
+        }
+        $false
+    }
+    if ($ConnectTo) {
+        $c = (@(A connect $ConnectTo) -join ' ').Trim()
+        $ok = ($c -match 'connected to') -and (Wait-Online $ConnectTo)
+        if (-not $ok) { A disconnect $ConnectTo | Out-Null }
+        return [pscustomobject]@{ Ok = $true; Connected = $ok; Stage = 'connect'; Detail = "$ConnectTo - $c" }
+    }
 
     if (-not $Addr) {
         $start = Get-Date; $restarted = $false
@@ -983,8 +1010,9 @@ $script:PairWork = {
     # by multicast, which the Windows firewall often drops for this adb.exe,
     # so "adb mdns services" alone is not enough. Try, in order:
     #   1. adb's own mDNS list (match by guid or IP)
-    #   2. a direct unicast mDNS SRV query to the device (reply is allowed)
+    #   2. an mDNS SRV query asking for a unicast reply (reply is allowed)
     #   3. restart the adb server once (fresh queries), if nothing is running
+    # If none works, the panel switches to connect mode (address typed in).
     $guid = if ($out -match 'guid=([^\]\s]+)') { $Matches[1] } else { '' }
     $ip = ($Addr -split ':')[0]
     Log "guid=$guid ip=$ip"
@@ -998,10 +1026,18 @@ $script:PairWork = {
             foreach ($p in $name.Split('.')) {
                 $b = [Text.Encoding]::ASCII.GetBytes($p); $q.Add([byte]$b.Length); $q.AddRange($b)
             }
-            $q.AddRange([byte[]](0, 0, 33, 0, 1))        # type SRV, class IN
-            [void]$u.Send($q.ToArray(), $q.Count, $ip, 5353)
+            # Type SRV, class IN with the unicast-response bit. Sent to the
+            # mDNS multicast group: some phones ignore direct unicast queries
+            # but answer this one straight back to our socket.
+            $q.AddRange([byte[]](0, 0, 33, 0x80, 1))
+            [void]$u.Send($q.ToArray(), $q.Count, '224.0.0.251', 5353)
             $ep = New-Object Net.IPEndPoint ([Net.IPAddress]::Any, 0)
-            return (Get-SrvPortFromReply $u.Receive([ref]$ep))
+            while ($true) {
+                $r = $u.Receive([ref]$ep)
+                if ($ep.Address.ToString() -ne $ip) { continue }
+                $port = Get-SrvPortFromReply $r
+                if ($port -gt 0) { return $port }
+            }
         } catch {} finally { $u.Close() }
         0
     }
@@ -1034,7 +1070,7 @@ $script:PairWork = {
     }
 
     $start = Get-Date; $restarted = $false
-    while (((Get-Date) - $start).TotalSeconds -lt 20) {
+    while (((Get-Date) - $start).TotalSeconds -lt 10) {
         if (Test-Online) { $res.Connected = $true; break }
         $target = ''
         foreach ($l in @(A mdns services)) {
@@ -1069,6 +1105,19 @@ function Set-PairBusy([bool]$on) {
     $PairAddr.IsEnabled  = -not $on
 }
 
+$script:PairMode = 'pair'
+function Set-PairMode([string]$mode) {
+    $script:PairMode = $mode
+    if ($mode -eq 'connect') {
+        $PairAddrLbl.Text  = $Txt.ConnAddrLabel
+        $PairGoBtn.Content = $Txt.ConnBtn
+        $PairAddr.Text     = ''
+    } else {
+        $PairAddrLbl.Text  = $Txt.PairAddrLabel
+        $PairGoBtn.Content = $Txt.PairBtn
+    }
+}
+
 $script:PairTimer = New-Object System.Windows.Threading.DispatcherTimer
 $script:PairTimer.Interval = [TimeSpan]::FromMilliseconds(300)
 $script:PairTimer.Add_Tick({
@@ -1084,11 +1133,15 @@ $script:PairTimer.Add_Tick({
         Set-PairStatus ($Txt.PairOk -f $r.Detail)
         $PairPanel.Visibility = 'Collapsed'
         Update-DeviceCards
+    } elseif ($r -and $r.Stage -eq 'connect') {
+        Set-PairStatus ($Txt.ConnFail -f $r.Detail)
     } elseif ($r -and $r.Ok) {
-        # Paired, but the connect port was not found. The pairing is saved on
-        # the device, so a refresh (or the next launch) usually picks it up.
+        # Paired, but the connect port was not found automatically. Switch the
+        # panel to connect mode: the user types the address shown at the top
+        # of the device's Wireless debugging screen.
+        Set-PairMode 'connect'
         Set-PairStatus $Txt.PairNoConnect
-        Update-DeviceCards
+        [void]$PairAddr.Focus()
     } elseif ($r -and $r.Stage -eq 'nosvc') {
         Set-PairStatus $Txt.PairNoService
     } else {
@@ -1099,6 +1152,7 @@ $script:PairTimer.Add_Tick({
 
 $AddDeviceBtn.Add_Click({
     if ($script:Busy -or $script:PairJob) { return }
+    Set-PairMode 'pair'
     $PairCode.Text = ''
     $PairAddr.Text = ''
     Set-PairStatus $null
@@ -1120,6 +1174,15 @@ $PairCancelBtn.Add_Click({
 
 $PairGoBtn.Add_Click({
     if ($script:PairJob) { return }
+    if ($script:PairMode -eq 'connect') {
+        $target = "$($PairAddr.Text)".Trim()
+        if ($target -notmatch '^\d{1,3}(\.\d{1,3}){3}:\d{2,5}$') { Set-PairStatus $Txt.ConnBadAddr; return }
+        Set-PairBusy $true
+        Set-PairStatus $Txt.ConnConnecting
+        $script:PairJob = Start-Job -ScriptBlock $script:PairWork -ArgumentList $AdbExe, '', '', $false, $target
+        $script:PairTimer.Start()
+        return
+    }
     $code = "$($PairCode.Text)".Trim()
     if ($code -notmatch '^\d{6}$') { Set-PairStatus $Txt.PairBadCode; return }
     $addr = "$($PairAddr.Text)".Trim()
