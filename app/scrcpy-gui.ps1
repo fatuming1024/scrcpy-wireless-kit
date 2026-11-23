@@ -50,6 +50,7 @@ $Strings = @{
         PairSearching = '기기의 페어링 창을 찾는 중입니다... 코드 창을 닫지 마세요.'
         PairNoService = '기기의 페어링 창을 찾지 못했습니다. ''페어링 코드로 기기 페어링'' 창이 열려 있는지 확인하세요. 계속 안 되면 그 창에 나온 IP 주소:포트를 아래 칸에 입력하세요.'
         PairOk        = '페어링 완료 ({0}). 기기 목록을 새로 고칩니다.'
+        PairNoConnect = '페어링은 완료됐지만 연결 포트를 찾지 못했습니다. 기기의 무선 디버깅 화면을 연 채로 둔 뒤 [취소] → [새로고침]을 눌러 보세요. (기록: %TEMP%\scrcpy-wireless-pair.log)'
         PairFail      = '페어링 실패 - 코드가 틀렸거나 만료됐을 수 있습니다. 기기에서 새 코드를 받아 다시 시도하세요. ({0})'
         LaunchFail    = '{0}: 실행 실패 - {1}'
         HwFail        = '{0}: 하드웨어 인코더 실패 - 소프트웨어 인코더로 다시 시도합니다.'
@@ -92,6 +93,7 @@ $Strings = @{
         PairSearching = 'Looking for the pairing screen on the device... keep the code window open.'
         PairNoService = 'Could not find the pairing screen. Check that ''Pair device with pairing code'' is open on the device. If it still fails, type the IP address:port shown there into the box below.'
         PairOk        = 'Paired ({0}). Refreshing the device list.'
+        PairNoConnect = 'Paired, but the connection port was not found. Keep the Wireless debugging screen open on the device, then press Cancel and Refresh. (Log: %TEMP%\scrcpy-wireless-pair.log)'
         PairFail      = 'Pairing failed - the code may be wrong or expired. Get a new code on the device and try again. ({0})'
         LaunchFail    = '{0}: failed to start - {1}'
         HwFail        = '{0}: hardware encoder failed - retrying with the software encoder.'
@@ -964,24 +966,95 @@ $script:PairWork = {
         if (-not $Addr) { $res.Stage = 'nosvc'; return [pscustomobject]$res }
     }
 
+    $log = Join-Path $env:TEMP 'scrcpy-wireless-pair.log'
+    function Log([string]$m) { try { Add-Content -LiteralPath $log -Value ("{0:HH:mm:ss} {1}" -f (Get-Date), $m) -Encoding UTF8 } catch {} }
+    try { Set-Content -LiteralPath $log -Value "pair $Addr" -Encoding UTF8 } catch {}
+
     $out = (@(A pair $Addr $Code) -join ' ').Trim()
+    Log "pair: $out"
     if ($out -notmatch 'Successfully paired') {
         $res.Stage = 'fail'; $res.Detail = $out; return [pscustomobject]$res
     }
     $res.Ok = $true; $res.Detail = $Addr
+    $res.Connected = $false
 
-    # Connect right away so the device shows up in the list.
+    # Connect right away so the device shows up in the list. The connect port
+    # differs from the pairing port. After pairing, the device announces it
+    # by multicast, which the Windows firewall often drops for this adb.exe,
+    # so "adb mdns services" alone is not enough. Try, in order:
+    #   1. adb's own mDNS list (match by guid or IP)
+    #   2. a direct unicast mDNS SRV query to the device (reply is allowed)
+    #   3. restart the adb server once (fresh queries), if nothing is running
     $guid = if ($out -match 'guid=([^\]\s]+)') { $Matches[1] } else { '' }
-    $start = Get-Date
-    while (((Get-Date) - $start).TotalSeconds -lt 10) {
-        foreach ($l in @(A mdns services)) {
-            if ($l -match '_adb-tls-connect\._tcp\s+(\S+:\d+)' -and (-not $guid -or $l.StartsWith($guid))) {
-                A connect $Matches[1] | Out-Null
-                return [pscustomobject]$res
+    $ip = ($Addr -split ':')[0]
+    Log "guid=$guid ip=$ip"
+
+    function Get-SrvPort([string]$ip, [string]$name) {
+        $u = New-Object Net.Sockets.UdpClient
+        try {
+            $u.Client.ReceiveTimeout = 1200
+            $q = New-Object 'Collections.Generic.List[byte]'
+            $q.AddRange([byte[]](0x12, 0x34, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0))
+            foreach ($p in $name.Split('.')) {
+                $b = [Text.Encoding]::ASCII.GetBytes($p); $q.Add([byte]$b.Length); $q.AddRange($b)
             }
-        }
-        Start-Sleep -Milliseconds 700
+            $q.AddRange([byte[]](0, 0, 33, 0, 1))        # type SRV, class IN
+            [void]$u.Send($q.ToArray(), $q.Count, $ip, 5353)
+            $ep = New-Object Net.IPEndPoint ([Net.IPAddress]::Any, 0)
+            return (Get-SrvPortFromReply $u.Receive([ref]$ep))
+        } catch {} finally { $u.Close() }
+        0
     }
+
+    # Walk every resource record of a DNS reply and return the first SRV port.
+    function Get-SrvPortFromReply([byte[]]$r) {
+        try {
+            $skipName = { param($i) while ($i -lt $r.Length) { $l = $r[$i]; if ($l -eq 0) { return $i + 1 }; if (($l -band 0xC0) -eq 0xC0) { return $i + 2 }; $i += 1 + $l }; $i }
+            $i = 12
+            $qd = $r[4] * 256 + $r[5]
+            for ($k = 0; $k -lt $qd; $k++) { $i = (& $skipName $i) + 4 }
+            $rrs = ($r[6] * 256 + $r[7]) + ($r[8] * 256 + $r[9]) + ($r[10] * 256 + $r[11])
+            for ($k = 0; $k -lt $rrs -and $i -lt $r.Length; $k++) {
+                $i = & $skipName $i
+                $type = $r[$i] * 256 + $r[$i + 1]
+                $len  = $r[$i + 8] * 256 + $r[$i + 9]
+                $d = $i + 10
+                if ($type -eq 33) { return $r[$d + 4] * 256 + $r[$d + 5] }
+                $i = $d + $len
+            }
+        } catch {}
+        0
+    }
+
+    function Test-Online {
+        foreach ($l in @(A devices)) {
+            if ($l -match '^(\S+)\s+device$' -and ($Matches[1].StartsWith("$ip`:") -or ($guid -and $Matches[1].StartsWith($guid)))) { return $true }
+        }
+        $false
+    }
+
+    $start = Get-Date; $restarted = $false
+    while (((Get-Date) - $start).TotalSeconds -lt 20) {
+        if (Test-Online) { $res.Connected = $true; break }
+        $target = ''
+        foreach ($l in @(A mdns services)) {
+            if ($l -match '_adb-tls-connect\._tcp\s+(\S+:\d+)' -and (($guid -and $l.StartsWith($guid)) -or $Matches[1].StartsWith("$ip`:"))) { $target = $Matches[1]; break }
+        }
+        if (-not $target -and $guid) {
+            $port = Get-SrvPort $ip "$guid._adb-tls-connect._tcp.local"
+            if ($port -gt 0) { $target = "$ip`:$port" }
+        }
+        if ($target) {
+            $c = (@(A connect $target) -join ' ').Trim()
+            Log "connect $target -> $c"
+            if (Test-Online) { $res.Connected = $true; break }
+        } elseif (-not $restarted -and $AllowRestart -and ((Get-Date) - $start).TotalSeconds -gt 4) {
+            Log 'restart adb server'
+            A kill-server | Out-Null; A start-server | Out-Null; $restarted = $true
+        }
+        Start-Sleep -Milliseconds 800
+    }
+    Log "connected=$($res.Connected)"
     [pscustomobject]$res
 }
 
@@ -1007,9 +1080,14 @@ $script:PairTimer.Add_Tick({
     $script:PairJob = $null
     Set-PairBusy $false
 
-    if ($r -and $r.Ok) {
+    if ($r -and $r.Ok -and $r.Connected) {
         Set-PairStatus ($Txt.PairOk -f $r.Detail)
         $PairPanel.Visibility = 'Collapsed'
+        Update-DeviceCards
+    } elseif ($r -and $r.Ok) {
+        # Paired, but the connect port was not found. The pairing is saved on
+        # the device, so a refresh (or the next launch) usually picks it up.
+        Set-PairStatus $Txt.PairNoConnect
         Update-DeviceCards
     } elseif ($r -and $r.Stage -eq 'nosvc') {
         Set-PairStatus $Txt.PairNoService

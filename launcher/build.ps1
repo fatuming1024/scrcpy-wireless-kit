@@ -9,10 +9,13 @@
 param(
     [Parameter(Mandatory = $true)][string]$ScrcpyDir,
     [string]$Version = '1.1.0',
-    [string]$OutDir  = (Join-Path (Split-Path $PSScriptRoot -Parent) 'dist')
+    [string]$OutDir  = ''
 )
 $ErrorActionPreference = 'Stop'
+# $PSScriptRoot is empty inside param() defaults on PowerShell 5.1, so the
+# default output folder is resolved here instead.
 $repo = Split-Path $PSScriptRoot -Parent
+if (-not $OutDir) { $OutDir = Join-Path $repo 'dist' }
 $name = "scrcpy-wireless-kit-v$Version-win64"
 $stage = Join-Path $OutDir $name
 $app = Join-Path $stage 'app'
