@@ -2,7 +2,7 @@
 # Adds one entry per wireless device that is currently online (found via mDNS),
 # or removes them all. Entries call send-to-device.ps1 with the device's
 # hardware serial, so they keep working when the IP/port changes.
-# Text: Korean on Korean Windows, English otherwise (override: SCRCPY_LANG=ko|en).
+# Text: Korean on Korean Windows, English otherwise; the launcher's language button overrides both.
 # Saved as UTF-8 with BOM - reapply BOM after editing.
 
 param([switch]$Uninstall)
@@ -14,7 +14,10 @@ $PsExe   = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell
 $env:ADB_MDNS_OPENSCREEN = '1'
 $Shell   = New-Object -ComObject WScript.Shell
 
-$LangCode = if ($env:SCRCPY_LANG) { $env:SCRCPY_LANG } else { (Get-UICulture).TwoLetterISOLanguageName }
+# Same order as the launcher: saved choice (language button), SCRCPY_LANG, Windows language.
+$LangFile = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'scrcpy-wireless-kit\lang.txt'
+$LangCode = try { "$(Get-Content -LiteralPath $LangFile -TotalCount 1 -ErrorAction Stop)".Trim() } catch { '' }
+if ($LangCode -notin 'ko', 'en') { $LangCode = if ($env:SCRCPY_LANG) { $env:SCRCPY_LANG } else { (Get-UICulture).TwoLetterISOLanguageName } }
 $IsKo = $LangCode -eq 'ko'
 function L([string]$ko, [string]$en) { if ($IsKo) { $ko } else { $en } }
 

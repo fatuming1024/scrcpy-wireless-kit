@@ -22,7 +22,7 @@ A one-click Windows launcher for [scrcpy](https://github.com/Genymobile/scrcpy):
 | **Add device (pairing)** | Step-by-step guide to turn on Wireless debugging. Type the 6-digit pairing code and the launcher finds the device's IP and port by itself, then pairs and connects. |
 | **Auto-connect** | Uses mDNS to find each device's Wireless-debugging port, which changes every time it is turned on. You never type an IP or port. If the adb server has gone stale, it restarts it and searches again. |
 | **Send to device** (launcher button **"Send-to menu"**) | Adds **Right-click → Send to → "Send to &lt;device&gt;"** to Explorer. Files and folders go to the device's `Download` folder over Wi-Fi, with no mirroring window needed. |
-| **English / Korean UI** | Follows the Windows display language (Korean Windows → Korean, otherwise English). Force one with the environment variable `SCRCPY_LANG=en` or `SCRCPY_LANG=ko`. |
+| **English / Korean UI** | Switch with the **English / 한국어** button at the top of the launcher. The choice is remembered and also applies to the Send-to setup and messages. Until you choose, it follows the Windows display language (Korean Windows → Korean, otherwise English) or the environment variable `SCRCPY_LANG=en` / `SCRCPY_LANG=ko`. |
 | **Korean typing** | Mirror windows use `--keyboard=uhid` (the device sees a physical keyboard), so the device's own keyboard handles Korean and other languages. |
 | **Encoder fallback** | If the device's hardware video encoder fails at start-up, the launcher retries with the software encoder. |
 | **Rotation-aware sizing** | Window size is computed from the device's *current* orientation, and stream quality stays high when you resize the window. |
@@ -107,7 +107,7 @@ The kit is under the MIT License (see `LICENSE`). scrcpy is © Genymobile / Roma
 | **기기 추가 (페어링)** | 무선 디버깅을 켜는 방법을 단계별로 보여줍니다. 6자리 페어링 코드만 입력하면 기기의 IP와 포트를 알아서 찾아 페어링하고 연결합니다. |
 | **자동 연결** | 무선 디버깅 포트는 켤 때마다 바뀌는데, mDNS로 이 포트를 자동으로 찾습니다. IP나 포트를 입력할 필요가 없습니다. adb 서버가 오래 켜져 있어 기기를 못 찾으면 서버를 재시작해서 다시 찾습니다. |
 | **기기로 보내기** (런처 상단 **"보내기 메뉴 설정"** 버튼) | 탐색기 **우클릭 → 보내기 → "&lt;기기&gt;에 보내기"** 메뉴를 추가합니다. 파일과 폴더가 Wi-Fi로 기기의 `Download` 폴더에 복사되고, 미러링 창을 띄우지 않아도 됩니다. |
-| **한국어 / 영어 화면** | Windows 표시 언어를 따라갑니다(한국어 Windows → 한국어, 그 외 → 영어). 환경 변수 `SCRCPY_LANG=ko` 또는 `SCRCPY_LANG=en`으로 고정할 수 있습니다. |
+| **한국어 / 영어 화면** | 런처 위쪽의 **English / 한국어** 버튼으로 바꿉니다. 고른 언어는 저장되고, 보내기 메뉴 설정과 전송 메시지에도 적용됩니다. 고르기 전에는 Windows 표시 언어(한국어 Windows → 한국어, 그 외 → 영어)나 환경 변수 `SCRCPY_LANG=ko` / `SCRCPY_LANG=en`을 따릅니다. |
 | **한글 입력** | 미러링 창을 `--keyboard=uhid`로 실행합니다. 기기는 실제 키보드가 연결된 것으로 인식하고, 기기 쪽 키보드 앱이 한글을 입력합니다. |
 | **인코더 자동 전환** | 기기의 하드웨어 영상 인코더가 시작 직후 실패하면 소프트웨어 인코더로 다시 실행합니다. |
 | **회전 대응 창 크기** | 기기의 **현재 방향**(세로/가로)을 기준으로 창 크기를 계산합니다. 창을 키워도 화질이 유지됩니다. |

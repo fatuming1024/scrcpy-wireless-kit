@@ -16,8 +16,11 @@ $Target = '/sdcard/Download/'
 $AdbExe = Join-Path $PSScriptRoot 'adb.exe'
 $env:ADB_MDNS_OPENSCREEN = '1'
 
-# Messages: Korean on Korean Windows, English otherwise (override: SCRCPY_LANG=ko|en).
-$LangCode = if ($env:SCRCPY_LANG) { $env:SCRCPY_LANG } else { (Get-UICulture).TwoLetterISOLanguageName }
+# Messages: Korean on Korean Windows, English otherwise; the launcher's language button overrides both.
+# Same order as the launcher: saved choice (language button), SCRCPY_LANG, Windows language.
+$LangFile = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'scrcpy-wireless-kit\lang.txt'
+$LangCode = try { "$(Get-Content -LiteralPath $LangFile -TotalCount 1 -ErrorAction Stop)".Trim() } catch { '' }
+if ($LangCode -notin 'ko', 'en') { $LangCode = if ($env:SCRCPY_LANG) { $env:SCRCPY_LANG } else { (Get-UICulture).TwoLetterISOLanguageName } }
 $IsKo = $LangCode -eq 'ko'
 function L([string]$ko, [string]$en) { if ($IsKo) { $ko } else { $en } }
 

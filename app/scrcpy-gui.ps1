@@ -16,12 +16,18 @@ function Invoke-Adb {
 }
 
 # ---------------------------------------------------------------- Language
-# Korean on Korean Windows, English everywhere else.
-# Override with the environment variable SCRCPY_LANG=ko or SCRCPY_LANG=en.
+# Order: the choice saved by the language button, then the environment
+# variable SCRCPY_LANG=ko|en, then the Windows display language (Korean on
+# Korean Windows, English everywhere else). The send-to scripts use the same
+# order.
 
-$Lang = if ($env:SCRCPY_LANG) { $env:SCRCPY_LANG } else { (Get-UICulture).TwoLetterISOLanguageName }
+$LangFile = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'scrcpy-wireless-kit\lang.txt'
+$Lang = try { "$(Get-Content -LiteralPath $LangFile -TotalCount 1 -ErrorAction Stop)".Trim() } catch { '' }
+if ($Lang -notin 'ko', 'en') { $Lang = if ($env:SCRCPY_LANG) { $env:SCRCPY_LANG } else { (Get-UICulture).TwoLetterISOLanguageName } }
 $Strings = @{
     ko = @{
+        LangBtn       = 'English'
+        LangTip       = '런처와 메뉴를 영어로 바꿉니다 (Switch to English)'
         SendToBtn     = '보내기 메뉴 설정'
         SendToTip     = '탐색기 우클릭 → 보내기에 기기별 메뉴를 추가/제거합니다'
         Title         = '미러링할 기기를 선택하세요'
@@ -70,6 +76,8 @@ $Strings = @{
         Preparing     = '실행을 준비하고 있습니다...'
     }
     en = @{
+        LangBtn       = '한국어'
+        LangTip       = 'Switch the launcher and menus to Korean (한국어로 바꾸기)'
         SendToBtn     = 'Send-to menu'
         SendToTip     = 'Add or remove per-device entries in the Explorer right-click Send to menu'
         Title         = 'Choose devices to mirror'
@@ -298,6 +306,8 @@ $xaml = @'
         <TextBlock Text="scrcpy" FontSize="13" FontWeight="Bold" Foreground="#B0B8C1"
                    VerticalAlignment="Center"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,-4,-8,0">
+          <Button x:Name="LangBtn" Content="@@LangBtn@@" Style="{StaticResource Ghost}"
+                  Height="34" ToolTip="@@LangTip@@"/>
           <Button x:Name="AddDeviceBtn" Content="@@AddDevice@@" Style="{StaticResource Ghost}"
                   Height="34" ToolTip="@@AddDeviceTip@@"/>
           <Button x:Name="SendToBtn" Content="@@SendToBtn@@" Style="{StaticResource Ghost}"
@@ -489,6 +499,15 @@ $RefreshBtn = $win.FindName('RefreshBtn')
 $SelectAllBtn = $win.FindName('SelectAllBtn')
 $CloseBtn   = $win.FindName('CloseBtn')
 $SendToBtn  = $win.FindName('SendToBtn')
+$LangBtn    = $win.FindName('LangBtn')
+
+# After a language switch the new window opens where the old one was.
+if ($env:SCRCPY_GUI_POS -match '^(-?\d+),(-?\d+)$') {
+    $win.WindowStartupLocation = 'Manual'
+    $win.Left = [double]$Matches[1]
+    $win.Top  = [double]$Matches[2]
+}
+$env:SCRCPY_GUI_POS = $null
 $AddDeviceBtn  = $win.FindName('AddDeviceBtn')
 $PairPanel     = $win.FindName('PairPanel')
 $PairCode      = $win.FindName('PairCode')
@@ -936,6 +955,23 @@ $LaunchBtn.Add_Click({
 
 $RefreshBtn.Add_Click({ Update-DeviceCards })
 $CloseBtn.Add_Click({ $win.Close() })
+
+# Language button: save the other language and reopen the window (all text
+# is filled in when the window is built). Mirroring windows keep running.
+$script:GuiScript = $PSCommandPath
+$LangBtn.Add_Click({
+    if ($script:Busy -or $script:PairJob) { return }
+    $new = if ($Lang -eq 'ko') { 'en' } else { 'ko' }
+    try {
+        New-Item -ItemType Directory -Force (Split-Path $LangFile) | Out-Null
+        Set-Content -LiteralPath $LangFile -Value $new -Encoding ASCII
+    } catch { return }
+    $env:SCRCPY_GUI_POS = '{0},{1}' -f [int]$win.Left, [int]$win.Top
+    Start-Process -FilePath (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') `
+        -WorkingDirectory $script:KitRoot -WindowStyle Hidden -ArgumentList @(
+        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-STA', '-WindowStyle', 'Hidden', '-File', "`"$script:GuiScript`"")
+    $win.Close()
+})
 
 # Explorer "Send to" setup runs in its own console window (it asks for a
 # name per device), so the GUI stays responsive.
